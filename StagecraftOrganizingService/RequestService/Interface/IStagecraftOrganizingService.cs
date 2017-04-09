@@ -6,11 +6,11 @@ using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Text;
 
-namespace StagecraftOrganizingService.RequestService
+namespace StagecraftOrganizingService.RequestService.Interface
 {
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the interface name "IStagecraftOrganizingService" in both code and config file together.
     [ServiceContract(CallbackContract = typeof(IStagecraftOrganizingCallbackService))]
-    public interface IStagecraftOrganizingClientService
+    public interface IStagecraftOrganizingService
     {
         [OperationContract(IsOneWay = false)]
         [FaultContract(typeof(ApplicationException))]
@@ -39,6 +39,10 @@ namespace StagecraftOrganizingService.RequestService
         [OperationContract(IsOneWay = false)]
         [FaultContract(typeof(ApplicationException))]
         void SendUpdatedList(List<SeatDetails> updatedSeatDetailsList);
+
+        [OperationContract(IsOneWay = false)]
+        [FaultContract(typeof(ApplicationException))]
+        void SendUpdatedBookingDetailsList(List<SeatBookingDetails> updatedSeatDetailsList);
 
         [OperationContract(IsOneWay = false)]
         [FaultContract(typeof(ApplicationException))]

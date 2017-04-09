@@ -5,11 +5,12 @@ using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Text;
 using StagecraftOrganizingService.DataContracts;
+using StagecraftOrganizingService.RequestService.Interface;
 
 namespace StagecraftOrganizingService.RequestService
 {
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "StagecraftOrganizingService" in both code and config file together.
-    public class StagecraftOrganizingClientService : IStagecraftOrganizingClientService
+    public class StagecraftOrganizingService : IStagecraftOrganizingService
     {
         private static List<IStagecraftOrganizingCallbackService> _callbackChannels = new List<IStagecraftOrganizingCallbackService>();
         private static List<SeatDetails> _seatingList = new List<SeatDetails>();
@@ -341,6 +342,51 @@ namespace StagecraftOrganizingService.RequestService
                     FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
                 }
 
+            }
+        }
+
+        public void SendUpdatedBookingDetailsList(List<SeatBookingDetails> updatedSeatDetailsList)
+        {
+            lock (_sycnRoot)
+            {
+                try
+                {
+                    //this.RequestUpdatedSeatList();
+                    IStagecraftOrganizingCallbackService callbackChannel =
+                      OperationContext.Current.GetCallbackChannel<IStagecraftOrganizingCallbackService>();
+
+                    if (!_callbackChannels.Contains(callbackChannel))
+                    {
+                        _callbackChannels.Add(callbackChannel);
+                    }
+
+                    for (Int32 i = _callbackChannels.Count - 1; i >= 0; i--)
+                    {
+                        if (((ICommunicationObject)_callbackChannels[i]).State != CommunicationState.Opened)
+                        {
+                            _callbackChannels.RemoveAt(i);
+                            continue;
+                        }
+
+                        try
+                        {
+                            _callbackChannels[i].SendUpdatedBookingDetails(updatedSeatDetailsList);
+                        }
+                        catch (Exception ex)
+                        {
+                            _callbackChannels.RemoveAt(i);
+                            CustomExpMsg customMsg = new CustomExpMsg("Service threw exception while communicating on Callback Channel: " + _callbackChannels[i].GetHashCode());
+                            throw new FaultException<CustomExpMsg>(customMsg, new
+                            FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
+                        }
+                    }
+                }
+                catch (ApplicationException ex)
+                {
+                    CustomExpMsg customMsg = new CustomExpMsg(ex.Message);
+                    throw new FaultException<CustomExpMsg>(customMsg, new
+                    FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
+                }
             }
         }
     }

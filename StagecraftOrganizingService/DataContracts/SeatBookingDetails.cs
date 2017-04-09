@@ -1,66 +1,88 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace StagecraftOrganizingService.DataContracts
 {
+    [DataContract]
     public class SeatBookingDetails
     {
-        private Int32 _customerId;
-        private String _customerEmail;
-        private Decimal _pendingAmount;
-        private List<SeatDetails> _bookedSeatDetails;
-        public Int32 CustomerId
+        private Int32 customerId;
+        private String bookingDate;
+        private List<TicketDetails> bookedTicketDetails;
+        private List<SeatDetails> bookedSeatDetails;
+        private String bookingStatus;
+
+        [DataMember]
+        public int CustomerId
         {
             get
             {
-                return _customerId;
+                return this.customerId;
             }
 
             set
             {
-                _customerId = value;
+                this.customerId = value;
             }
         }
 
-        public String CustomerEmail
+        [DataMember]
+        public string BookingDate
         {
             get
             {
-                return _customerEmail;
+                return this.bookingDate;
             }
 
             set
             {
-                _customerEmail = value;
+                this.bookingDate = value;
             }
         }
 
-        public decimal PendingAmount
+        [DataMember]
+        public List<TicketDetails> BookedTicketDetails
         {
             get
             {
-                return _pendingAmount;
+                return this.bookedTicketDetails;
             }
 
             set
             {
-                _pendingAmount = value;
+                this.bookedTicketDetails = value;
             }
         }
 
+        [DataMember]
         public List<SeatDetails> BookedSeatDetails
         {
             get
             {
-                return _bookedSeatDetails;
+                return this.bookedSeatDetails;
             }
 
             set
             {
-                _bookedSeatDetails = value;
+                this.bookedSeatDetails = value;
+            }
+        }
+
+        [DataMember]
+        public string BookingStatus
+        {
+            get
+            {
+                return this.bookingStatus;
+            }
+
+            set
+            {
+                this.bookingStatus = value;
             }
         }
     }

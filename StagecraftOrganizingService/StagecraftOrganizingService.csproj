@@ -49,19 +49,15 @@
     <Compile Include="DataContracts\SeatBookingDetails.cs" />
     <Compile Include="DataContracts\SeatDetails.cs" />
     <Compile Include="DataContracts\TicketDetails.cs" />
-    <Compile Include="CallbackService\IStagecraftOrganizingAdminCallbackService.cs" />
-    <Compile Include="RequestService\IStagecraftOrganizingAdminService.cs" />
     <Compile Include="CallbackService\IStagecraftOrganizingCallbackService.cs" />
-    <Compile Include="RequestService\IStagecraftOrganizingClientService.cs" />
+    <Compile Include="RequestService\Interface\IStagecraftOrganizingService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RequestService\StagecraftOrganizingAdminService.cs" />
-    <Compile Include="RequestService\StagecraftOrganizingClientService.cs" />
+    <Compile Include="RequestService\StagecraftOrganizingService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="StagecraftOrganizingServiceAdminHost.svc" />
     <Content Include="StagecraftOrganizingServiceHost.svc" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

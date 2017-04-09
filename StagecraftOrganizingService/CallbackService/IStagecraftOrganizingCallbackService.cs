@@ -16,6 +16,9 @@ namespace StagecraftOrganizingService
         void SendUpdatedSeatingList(List<SeatDetails> seatingList);
 
         [OperationContract(IsOneWay = true)]
+        void SendUpdatedBookingDetails(List<SeatBookingDetails> seatBookingDetailsList);
+
+        [OperationContract(IsOneWay = true)]
         void NotifyToGetUpdatedSeatingList();
         
         [OperationContract(IsOneWay = true)]
