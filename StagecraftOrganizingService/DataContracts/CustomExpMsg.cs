@@ -14,27 +14,27 @@ namespace StagecraftOrganizingService.DataContracts
         {
             this.ErrorMsg = "Service encountered an error";
         }
-        public CustomExpMsg(string message)
+        public CustomExpMsg(String message)
         {
             this.ErrorMsg = message;
         }
-        private int errorNumber;
+        private Int32 errorNumber;
         [DataMember(Order = 0)]
-        public int ErrorNumber
+        public Int32 ErrorNumber
         {
             get { return errorNumber; }
             set { errorNumber = value; }
         }
-        private string errrorMsg;
+        private String errrorMsg;
         [DataMember(Order = 1)]
-        public string ErrorMsg
+        public String ErrorMsg
         {
             get { return errrorMsg; }
             set { errrorMsg = value; }
         }
-        private string description;
+        private String description;
         [DataMember(Order = 2)]
-        public string Description
+        public String Description
         {
             get { return description; }
             set { description = value; }

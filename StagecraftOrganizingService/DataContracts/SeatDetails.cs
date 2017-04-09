@@ -10,24 +10,25 @@ namespace StagecraftOrganizingService.DataContracts
     [DataContract]
     public class SeatDetails
     {
-        private Int32 _seatNo;
-        private Int32 _rowNo;
-        private Int32 _blockNo;
-        private Int32 _floor;
-        private String _bgColour;
-        private TicketDetails _ticketDetails;
+        private Int32 seatNo;
+        private Int32 rowNo;
+        private Int32 blockNo;
+        private Int32 floor;
+        private String bgColour;
+        private TicketDetails ticketDetails;
+        private Boolean isAvailableSeat;
 
         [DataMember]
         public Int32 SeatNo
         {
             get
             {
-                return _seatNo;
+                return this.seatNo;
             }
 
             set
             {
-                _seatNo = value;
+                this.seatNo = value;
             }
         }
 
@@ -36,12 +37,12 @@ namespace StagecraftOrganizingService.DataContracts
         {
             get
             {
-                return _rowNo;
+                return this.rowNo;
             }
 
             set
             {
-                _rowNo = value;
+                this.rowNo = value;
             }
         }
 
@@ -50,12 +51,12 @@ namespace StagecraftOrganizingService.DataContracts
         {
             get
             {
-                return _blockNo;
+                return this.blockNo;
             }
 
             set
             {
-                _blockNo = value;
+                this.blockNo = value;
             }
         }
 
@@ -64,12 +65,12 @@ namespace StagecraftOrganizingService.DataContracts
         {
             get
             {
-                return _floor;
+                return this.floor;
             }
 
             set
             {
-                _floor = value;
+                this.floor = value;
             }
         }
 
@@ -78,25 +79,40 @@ namespace StagecraftOrganizingService.DataContracts
         {
             get
             {
-                return _bgColour;
+                return this.bgColour;
             }
 
             set
             {
-                _bgColour = value;
+                this.bgColour = value;
             }
         }
+
         [DataMember]
         public TicketDetails TicketDetails
         {
             get
             {
-                return _ticketDetails;
+                return this.ticketDetails;
             }
 
             set
             {
-                _ticketDetails = value;
+                this.ticketDetails = value;
+            }
+        }
+
+        [DataMember]
+        public bool IsAvailableSeat
+        {
+            get
+            {
+                return this.isAvailableSeat;
+            }
+
+            set
+            {
+                this.isAvailableSeat = value;
             }
         }
     }

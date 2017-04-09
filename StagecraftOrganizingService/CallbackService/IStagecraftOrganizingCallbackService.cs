@@ -16,12 +16,18 @@ namespace StagecraftOrganizingService
         void SendUpdatedSeatingList(List<SeatDetails> seatingList);
 
         [OperationContract(IsOneWay = true)]
-        void SendDeletedSeatDetails(SeatDetails seatDetails);
+        void NotifyToGetUpdatedSeatingList();
         
         [OperationContract(IsOneWay = true)]
-        void SendBookedSeatDetailsToDelete(SeatDetails seatDetails);
+        void SendBookedSeatDetailsToDelete(Int32 userId, SeatDetails seatDetails);
 
         [OperationContract(IsOneWay = true)]
-        void SendRequestForMoreTickets(Int32 userId);
+        void NotifyToCheckAvailabiltyOfSeats(List<SeatDetails> seatDetails);
+
+        [OperationContract(IsOneWay = true)]
+        void SendAvailabiltyOfSeats(List<SeatDetails> seatDetails);
+
+        [OperationContract(IsOneWay = true)]
+        void SendRequestForMoreTickets(Int32 userId, Int32 noOfSeatsNeeded);
     }
 }

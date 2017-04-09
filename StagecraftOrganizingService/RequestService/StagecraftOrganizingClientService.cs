@@ -6,10 +6,10 @@ using System.ServiceModel;
 using System.Text;
 using StagecraftOrganizingService.DataContracts;
 
-namespace StagecraftOrganizingService
+namespace StagecraftOrganizingService.RequestService
 {
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "StagecraftOrganizingService" in both code and config file together.
-    public class StagecraftOrganizingService : IStagecraftOrganizingService
+    public class StagecraftOrganizingClientService : IStagecraftOrganizingClientService
     {
         private static List<IStagecraftOrganizingCallbackService> _callbackChannels = new List<IStagecraftOrganizingCallbackService>();
         private static List<SeatDetails> _seatingList = new List<SeatDetails>();
@@ -34,8 +34,11 @@ namespace StagecraftOrganizingService
                     }
                 }
             }
-            catch
+            catch(Exception ex)
             {
+                CustomExpMsg customMsg = new CustomExpMsg(ex.Message);
+                throw new FaultException<CustomExpMsg>(customMsg, new
+                FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
             }
         }
 
@@ -54,78 +57,32 @@ namespace StagecraftOrganizingService
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                CustomExpMsg customMsg = new CustomExpMsg(ex.Message);
+                throw new FaultException<CustomExpMsg>(customMsg, new
+                FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
             }
         }
 
-        public void ReserveSeat(SeatDetails seatDetails)
-        {
-            lock (_sycnRoot)
-            {
-                try {
-                    var recordsCount = _seatingList.Where(x => x.SeatNo == seatDetails.SeatNo).Count();
-                    if (recordsCount == 0)
-                    {
-                        _seatingList.Add(seatDetails);
-                    }
-                    else
-                    {
-                        throw new ApplicationException("Seat is already booked by another customer. Please select another seat.");
-                    }
-
-                    for (int i = _callbackChannels.Count - 1; i >= 0; i--)
-                    {
-                        if (((ICommunicationObject)_callbackChannels[i]).State != CommunicationState.Opened)
-                        {
-                            _callbackChannels.RemoveAt(i);
-                            continue;
-                        }
-
-                        try
-                        {
-
-                            _callbackChannels[i].SendUpdatedSeatingList(_seatingList);
-                        }
-                        catch (Exception ex)
-                        {                            _callbackChannels.RemoveAt(i);
-                            CustomExpMsg customMsg = new CustomExpMsg("Service threw exception while communicating on Callback Channel: " + _callbackChannels[i].GetHashCode());
-                            throw new FaultException<CustomExpMsg>(customMsg, new
-                            FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
-                        }
-                    }
-                }catch(ApplicationException ex){
-                   CustomExpMsg customMsg = new CustomExpMsg(ex.Message);
-                    throw new FaultException<CustomExpMsg>(customMsg, new
-                    FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
-                }
-              
-            }
-        }
-
-        public void DeleteReservedSeat(SeatDetails seatDetails)
+        public void BookSeats(List<SeatDetails> seatDetailsList)
         {
             lock (_sycnRoot)
             {
                 try
                 {
-                    var index = _seatingList.FindIndex(x => x.SeatNo == seatDetails.SeatNo);
-                    SeatDetails deleatedSeatDetails = null;
-                    if (index > -1)
+                    IStagecraftOrganizingCallbackService callbackChannel =
+                       OperationContext.Current.GetCallbackChannel<IStagecraftOrganizingCallbackService>();
+
+                    if (!_callbackChannels.Contains(callbackChannel))
                     {
-                        deleatedSeatDetails = _seatingList.ElementAt(index);
-                        _seatingList.RemoveAt(index);
+                        _callbackChannels.Add(callbackChannel);
                     }
 
-                    //Console.WriteLine("-- Seating List --");
-                    //_seatingList.ForEach(listItem => Console.WriteLine(listItem));
-                    //Console.WriteLine("------------------");
-
-                    for (int i = _callbackChannels.Count - 1; i >= 0; i--)
+                        for (Int32 i = _callbackChannels.Count - 1; i >= 0; i--)
                     {
                         if (((ICommunicationObject)_callbackChannels[i]).State != CommunicationState.Opened)
                         {
-                            //Console.WriteLine("Detected Non-Open Callback Channel: {0}", _callbackChannels[i].GetHashCode());
                             _callbackChannels.RemoveAt(i);
                             continue;
                         }
@@ -133,71 +90,10 @@ namespace StagecraftOrganizingService
                         try
                         {
 
-                            _callbackChannels[i].SendUpdatedSeatingList(_seatingList);
-                            _callbackChannels[i].SendDeletedSeatDetails(deleatedSeatDetails);
-                            //Console.WriteLine("Pushed Updated List on Callback Channel: {0}", _callbackChannels[i].GetHashCode());
+                            _callbackChannels[i].SendUpdatedSeatingList(seatDetailsList);
                         }
                         catch (Exception ex)
                         {
-                            //Console.WriteLine("Service threw exception while communicating on Callback Channel: {0}", _callbackChannels[i].GetHashCode());
-                            //Console.WriteLine("Exception Type: {0} Description: {1}", ex.GetType(), ex.Message);
-                            //_callbackChannels.RemoveAt(i);
-                            CustomExpMsg customMsg = new CustomExpMsg("Service threw exception while communicating on Callback Channel: " + _callbackChannels[i].GetHashCode());
-                            throw new FaultException<CustomExpMsg>(customMsg, new
-                            FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
-                        }
-                    }
-                }
-                catch (ApplicationException ex)
-                {
-                    CustomExpMsg customMsg = new CustomExpMsg(ex.Message);
-                    throw new FaultException<CustomExpMsg>(customMsg, new
-                    FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
-                }
-            }
-        }
-
-        public void BookSeat(SeatDetails seatDetails)
-        {
-            lock (_sycnRoot)
-            {
-                try
-                {
-                    var index = _seatingList.FindIndex(x => x.SeatNo == seatDetails.SeatNo);
-                    if (index > -1)
-                    {
-                        _seatingList[index].BgColour= "#e70f0f";
-                    }
-                    else
-                    {
-                        CustomExpMsg customMsg = new CustomExpMsg("Seat details doesn't exist");
-                        throw new FaultException<CustomExpMsg>(customMsg, new
-                        FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
-                    }
-
-
-                    //Console.WriteLine("-- Seating List --");
-                    //_seatingList.ForEach(listItem => Console.WriteLine(listItem));
-                    //Console.WriteLine("------------------");
-
-                    for (int i = _callbackChannels.Count - 1; i >= 0; i--)
-                    {
-                        if (((ICommunicationObject)_callbackChannels[i]).State != CommunicationState.Opened)
-                        {
-                            //Console.WriteLine("Detected Non-Open Callback Channel: {0}", _callbackChannels[i].GetHashCode());
-                            _callbackChannels.RemoveAt(i);
-                            continue;
-                        }
-
-                        try
-                        {
-                            _callbackChannels[i].SendUpdatedSeatingList(_seatingList);
-                            //Console.WriteLine("Pushed Updated List on Callback Channel: {0}", _callbackChannels[i].GetHashCode());
-                        }
-                        catch (Exception ex)
-                        {
-                            //Console.WriteLine("Service threw exception while communicating on Callback Channel: {0}", _callbackChannels[i].GetHashCode());
-                            //Console.WriteLine("Exception Type: {0} Description: {1}", ex.GetType(), ex.Message);
                             _callbackChannels.RemoveAt(i);
                             CustomExpMsg customMsg = new CustomExpMsg("Service threw exception while communicating on Callback Channel: " + _callbackChannels[i].GetHashCode());
                             throw new FaultException<CustomExpMsg>(customMsg, new
@@ -215,48 +111,35 @@ namespace StagecraftOrganizingService
             }
         }
 
-        public void DeleteBookedSeat(SeatDetails seatDetails)
+        public void DeleteBookedSeat(Int32 userId, SeatDetails seatDetails)
         {
             lock (_sycnRoot)
             {
                 try
                 {
-                    var index = _seatingList.FindIndex(x => x.SeatNo == seatDetails.SeatNo);
-                    SeatDetails deleatedSeatDetails = null;
-                    if (index > -1)
+                    IStagecraftOrganizingCallbackService callbackChannel =
+                         OperationContext.Current.GetCallbackChannel<IStagecraftOrganizingCallbackService>();
+
+                    if (!_callbackChannels.Contains(callbackChannel))
                     {
-                        deleatedSeatDetails = _seatingList.ElementAt(index);
-                    }
-                    else
-                    {
-                        CustomExpMsg customMsg = new CustomExpMsg("Seat details doesn't exist");
-                        throw new FaultException<CustomExpMsg>(customMsg, new
-                        FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
+                        _callbackChannels.Add(callbackChannel);
                     }
 
-
-                    //Console.WriteLine("-- Seating List --");
-                    //_seatingList.ForEach(listItem => Console.WriteLine(listItem));
-                    //Console.WriteLine("------------------");
-
-                    for (int i = _callbackChannels.Count - 1; i >= 0; i--)
+                    for (Int32 i = _callbackChannels.Count - 1; i >= 0; i--)
                     {
                         if (((ICommunicationObject)_callbackChannels[i]).State != CommunicationState.Opened)
                         {
-                            //Console.WriteLine("Detected Non-Open Callback Channel: {0}", _callbackChannels[i].GetHashCode());
                             _callbackChannels.RemoveAt(i);
                             continue;
                         }
 
                         try
                         {
-                            _callbackChannels[i].SendBookedSeatDetailsToDelete(deleatedSeatDetails);
-                            //Console.WriteLine("Pushed Updated List on Callback Channel: {0}", _callbackChannels[i].GetHashCode());
+                            _callbackChannels[i].SendBookedSeatDetailsToDelete(userId,seatDetails);
+
                         }
                         catch (Exception ex)
                         {
-                            //Console.WriteLine("Service threw exception while communicating on Callback Channel: {0}", _callbackChannels[i].GetHashCode());
-                            //Console.WriteLine("Exception Type: {0} Description: {1}", ex.GetType(), ex.Message);
                             _callbackChannels.RemoveAt(i);
                             CustomExpMsg customMsg = new CustomExpMsg("Service threw exception while communicating on Callback Channel: " + _callbackChannels[i].GetHashCode());
                             throw new FaultException<CustomExpMsg>(customMsg, new
@@ -274,32 +157,176 @@ namespace StagecraftOrganizingService
             }
         }
 
-        public void RequestMoreSeats(int userId)
+        public void RequestMoreSeats(Int32 userId, Int32 noOfSeatsNeeded)
         {
 
             lock (_sycnRoot)
             {
                 try
                 {
+                    IStagecraftOrganizingCallbackService callbackChannel =
+                      OperationContext.Current.GetCallbackChannel<IStagecraftOrganizingCallbackService>();
 
-                    for (int i = _callbackChannels.Count - 1; i >= 0; i--)
+                    if (!_callbackChannels.Contains(callbackChannel))
+                    {
+                        _callbackChannels.Add(callbackChannel);
+                    }
+                    for (Int32 i = _callbackChannels.Count - 1; i >= 0; i--)
                     {
                         if (((ICommunicationObject)_callbackChannels[i]).State != CommunicationState.Opened)
                         {
-                            //Console.WriteLine("Detected Non-Open Callback Channel: {0}", _callbackChannels[i].GetHashCode());
                             _callbackChannels.RemoveAt(i);
                             continue;
                         }
 
                         try
                         {
-                            _callbackChannels[i].SendRequestForMoreTickets(userId);
-                            //Console.WriteLine("Pushed Updated List on Callback Channel: {0}", _callbackChannels[i].GetHashCode());
+                            _callbackChannels[i].SendRequestForMoreTickets(userId, noOfSeatsNeeded);
                         }
                         catch (Exception ex)
                         {
-                            //Console.WriteLine("Service threw exception while communicating on Callback Channel: {0}", _callbackChannels[i].GetHashCode());
-                            //Console.WriteLine("Exception Type: {0} Description: {1}", ex.GetType(), ex.Message);
+                            _callbackChannels.RemoveAt(i);
+                            CustomExpMsg customMsg = new CustomExpMsg("Service threw exception while communicating on Callback Channel: " + _callbackChannels[i].GetHashCode());
+                            throw new FaultException<CustomExpMsg>(customMsg, new
+                            FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
+                        }
+                    }
+                }
+                catch (ApplicationException ex)
+                {
+                    CustomExpMsg customMsg = new CustomExpMsg(ex.Message);
+                    throw new FaultException<CustomExpMsg>(customMsg, new
+                    FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
+                }
+
+            }
+        }
+
+        public void RequestUpdatedSeatList()
+        {
+            lock (_sycnRoot)
+            {
+                try
+                {
+                    IStagecraftOrganizingCallbackService callbackChannel =
+                         OperationContext.Current.GetCallbackChannel<IStagecraftOrganizingCallbackService>();
+
+                    if (!_callbackChannels.Contains(callbackChannel))
+                    {
+                        _callbackChannels.Add(callbackChannel);
+                    }
+
+                    for (Int32 i = _callbackChannels.Count - 1; i >= 0; i--)
+                    {
+                        if (((ICommunicationObject)_callbackChannels[i]).State != CommunicationState.Opened)
+                        {
+                            _callbackChannels.RemoveAt(i);
+                            continue;
+                        }
+
+                        try
+                        {
+                            _callbackChannels[i].NotifyToGetUpdatedSeatingList();
+                        }
+                        catch (Exception ex)
+                        {
+                            _callbackChannels.RemoveAt(i);
+                            CustomExpMsg customMsg = new CustomExpMsg("Service threw exception while communicating on Callback Channel: " + _callbackChannels[i].GetHashCode());
+                            throw new FaultException<CustomExpMsg>(customMsg, new
+                            FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
+                        }
+                    }
+                }
+                catch (ApplicationException ex)
+                {
+                    CustomExpMsg customMsg = new CustomExpMsg(ex.Message);
+                    throw new FaultException<CustomExpMsg>(customMsg, new
+                    FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
+                }
+
+            }
+
+        }
+
+        public void CheckAvailibility(List<SeatDetails> seatDetails)
+        {
+            lock (_sycnRoot)
+            {
+                try
+                {
+                    IStagecraftOrganizingCallbackService callbackChannel =
+                         OperationContext.Current.GetCallbackChannel<IStagecraftOrganizingCallbackService>();
+
+                    if (!_callbackChannels.Contains(callbackChannel))
+                    {
+                        _callbackChannels.Add(callbackChannel);
+                    }
+
+
+                    //this.RequestUpdatedSeatList();
+
+                    for (Int32 i = _callbackChannels.Count - 1; i >= 0; i--)
+                    {
+                        if (((ICommunicationObject)_callbackChannels[i]).State != CommunicationState.Opened)
+                        {
+                            _callbackChannels.RemoveAt(i);
+                            continue;
+                        }
+
+                        try
+                        {
+                            _callbackChannels[i].NotifyToCheckAvailabiltyOfSeats(seatDetails);
+                        }
+                        catch (Exception ex)
+                        {
+                            _callbackChannels.RemoveAt(i);
+                            CustomExpMsg customMsg = new CustomExpMsg("Service threw exception while communicating on Callback Channel: " + _callbackChannels[i].GetHashCode());
+                            throw new FaultException<CustomExpMsg>(customMsg, new
+                            FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
+                        }
+                    }
+                }
+                catch (ApplicationException ex)
+                {
+                    CustomExpMsg customMsg = new CustomExpMsg(ex.Message);
+                    throw new FaultException<CustomExpMsg>(customMsg, new
+                    FaultReason(customMsg.ErrorMsg), new FaultCode("Sender"));
+                }
+
+            }
+        }
+
+      
+
+        public void SendUpdatedList(List<SeatDetails> updatedSeatDetailsList)
+        {
+            lock (_sycnRoot)
+            {
+                try
+                {
+                    //this.RequestUpdatedSeatList();
+                    IStagecraftOrganizingCallbackService callbackChannel =
+                      OperationContext.Current.GetCallbackChannel<IStagecraftOrganizingCallbackService>();
+
+                    if (!_callbackChannels.Contains(callbackChannel))
+                    {
+                        _callbackChannels.Add(callbackChannel);
+                    }
+
+                    for (Int32 i = _callbackChannels.Count - 1; i >= 0; i--)
+                    {
+                        if (((ICommunicationObject)_callbackChannels[i]).State != CommunicationState.Opened)
+                        {
+                            _callbackChannels.RemoveAt(i);
+                            continue;
+                        }
+
+                        try
+                        {
+                            _callbackChannels[i].SendUpdatedSeatingList(updatedSeatDetailsList);
+                        }
+                        catch (Exception ex)
+                        {
                             _callbackChannels.RemoveAt(i);
                             CustomExpMsg customMsg = new CustomExpMsg("Service threw exception while communicating on Callback Channel: " + _callbackChannels[i].GetHashCode());
                             throw new FaultException<CustomExpMsg>(customMsg, new

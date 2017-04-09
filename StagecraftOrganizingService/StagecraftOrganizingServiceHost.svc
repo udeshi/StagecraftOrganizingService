@@ -1,1 +1,1 @@
-﻿<%@ ServiceHost Service="StagecraftOrganizingService.StagecraftOrganizingService" %>  
+﻿<%@ ServiceHost Service="StagecraftOrganizingService.RequestService.StagecraftOrganizingClientService" %>  

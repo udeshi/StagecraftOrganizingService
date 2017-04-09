@@ -12,7 +12,7 @@ namespace StagecraftOrganizingService.DataContracts
         private String _customerEmail;
         private Decimal _pendingAmount;
         private List<SeatDetails> _bookedSeatDetails;
-        public int CustomerId
+        public Int32 CustomerId
         {
             get
             {
@@ -25,7 +25,7 @@ namespace StagecraftOrganizingService.DataContracts
             }
         }
 
-        public string CustomerEmail
+        public String CustomerEmail
         {
             get
             {
